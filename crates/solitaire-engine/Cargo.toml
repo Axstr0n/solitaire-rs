@@ -1,0 +1,10 @@
+[package]
+name = "solitaire-engine"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+solitaire-core = { path = "../solitaire-core" }
+serde = { workspace = true }
+rand = { workspace = true }
+getset = { workspace = true }

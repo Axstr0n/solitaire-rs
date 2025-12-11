@@ -1,0 +1,8 @@
+[serve]
+open = true
+public_url = "/"
+
+[build]
+filehash = false
+sri = false
+public_url = "/solitaire-rs/"

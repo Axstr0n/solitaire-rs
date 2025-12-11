@@ -1,0 +1,9 @@
+[package]
+name = "solitaire-core"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+serde = { workspace = true }
+enum-iterator = { workspace = true }
+getset = { workspace = true }

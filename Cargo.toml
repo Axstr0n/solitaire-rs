@@ -1,0 +1,13 @@
+[workspace]
+members = [
+    "crates/solitaire-core",
+    "crates/solitaire-engine",
+    "crates/solitaire-gui",
+]
+resolver = "2"
+
+[workspace.dependencies]
+serde = {version = "1.0.228", features = ["derive"]}
+enum-iterator = "2.3.0"
+rand = "0.9.2"
+getset = "0.1.6"
