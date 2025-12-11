@@ -6,7 +6,9 @@ use solitaire_core::{
 };
 use solitaire_engine::prelude::*;
 
-use crate::{card_textures::CardTextures, layout::*, logger::GuiLogger, ui_element::UiElement};
+use crate::{
+    card_textures::CardTextures, layout::Layout, logger::GuiLogger, ui_element::UiElement,
+};
 
 #[derive(Deserialize, Serialize)]
 #[serde(default)]
@@ -25,6 +27,9 @@ pub struct App {
 
     #[cfg(debug_assertions)]
     debug_mode: bool,
+
+    #[serde(skip)]
+    layout: Layout,
 }
 
 #[derive(Debug)]
@@ -36,14 +41,16 @@ pub struct Dragging {
 
 impl Default for App {
     fn default() -> Self {
+        let game = Game::new(Some(1));
         let mut app = Self {
             card_textures: None,
-            game: Game::new(Some(1)),
+            game: game.clone(),
             logger: GuiLogger::default(),
             side_panel_width: 10.0,
             dragging: None,
             ui_elements: vec![],
             debug_mode: false,
+            layout: Layout::new(&game),
         };
         let ui_elements = app.compute_ui_elements();
         app.ui_elements = ui_elements;
@@ -264,12 +271,15 @@ impl App {
         {
             for (i, card) in dragging.cards.iter().enumerate() {
                 // Compute stacking offset for multiple cards
-                let stack_offset = egui::vec2(0.0, i as f32 * COLUMN_CARDS_SPACING);
+                let stack_offset = egui::vec2(0.0, i as f32 * self.layout.column_card_spacing);
 
                 // Position = mouse position minus initial offset + stacking offset
                 let pos = mouse_pos - dragging.offset + stack_offset;
 
-                let rect = egui::Rect::from_min_size(pos, egui::Vec2::new(CARD_W, CARD_H));
+                let rect = egui::Rect::from_min_size(
+                    pos,
+                    egui::Vec2::new(self.layout.card_width, self.layout.card_height),
+                );
                 self.render_card(card, rect, ui);
             }
         }
@@ -354,13 +364,9 @@ impl App {
 
         // Stock, Waste
         for pile_id in [PileId::Stock, PileId::Waste] {
-            let pos = match pile_id {
-                PileId::Stock => STOCK_POS,
-                PileId::Waste => WASTE_POS,
-                _ => unreachable!(),
-            };
-
-            if let Ok(pile) = self.game.pile(pile_id) {
+            if let Some(pos) = self.layout.get_position(&pile_id)
+                && let Ok(pile) = self.game.pile(pile_id)
+            {
                 let cards = pile.peek_cards(pile.len(), Side::Bottom);
                 self.push_pile_elements_generic(
                     &mut ui_elements,
@@ -373,11 +379,10 @@ impl App {
         }
 
         // Foundations
-        for id in 0..*self.game.num_foundations() {
-            let pile_id = PileId::Foundation(id);
-            let pos = FOUNDATION_POS[id as usize];
-
-            if let Ok(pile_ref) = self.game.pile(pile_id) {
+        for pile_id in self.game.foundation_ids() {
+            if let Some(pos) = self.layout.get_position(&pile_id)
+                && let Ok(pile_ref) = self.game.pile(pile_id)
+            {
                 let cards = pile_ref.peek_cards(pile_ref.len(), Side::Bottom);
                 self.push_pile_elements_generic(
                     &mut ui_elements,
@@ -390,11 +395,10 @@ impl App {
         }
 
         // Columns
-        for id in 0..*self.game.num_columns() {
-            let pile_id = PileId::Column(id);
-            let pos = COLUMN_POS[id as usize];
-
-            if let Ok(pile_ref) = self.game.pile(pile_id) {
+        for pile_id in self.game.column_ids() {
+            if let Some(pos) = self.layout.get_position(&pile_id)
+                && let Ok(pile_ref) = self.game.pile(pile_id)
+            {
                 let cards = pile_ref.peek_all(Side::Bottom);
                 self.push_pile_elements_generic(
                     &mut ui_elements,
@@ -402,7 +406,7 @@ impl App {
                     &cards,
                     pos,
                     PileLayout::Vertical {
-                        spacing: COLUMN_CARDS_SPACING,
+                        spacing: self.layout.column_card_spacing,
                     },
                 );
             }
@@ -418,7 +422,7 @@ impl App {
     fn card_rect(&self, position: (f32, f32)) -> egui::Rect {
         egui::Rect::from_min_size(
             self.panel_relative_pos(position.0, position.1),
-            egui::vec2(CARD_W, CARD_H),
+            egui::vec2(self.layout.card_width, self.layout.card_height),
         )
     }
 }
@@ -450,11 +454,11 @@ impl App {
                 .show(ui, |ui| {
                     self.display_pile(PileId::Stock, ui);
                     self.display_pile(PileId::Waste, ui);
-                    for id in 0..*self.game.num_foundations() {
-                        self.display_pile(PileId::Foundation(id), ui);
+                    for id in self.game.foundation_ids() {
+                        self.display_pile(id, ui);
                     }
-                    for id in 0..*self.game.num_columns() {
-                        self.display_pile(PileId::Column(id), ui);
+                    for id in self.game.column_ids() {
+                        self.display_pile(id, ui);
                     }
                 });
             ui.separator();

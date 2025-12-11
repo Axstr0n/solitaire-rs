@@ -7,7 +7,7 @@ use crate::{
     error::PileError,
 };
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Deserialize, Serialize)]
 pub enum PileId {
     Stock,
     Waste,

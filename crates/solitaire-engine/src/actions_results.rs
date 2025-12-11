@@ -40,8 +40,7 @@ impl ActionsResults {
 
         // Waste to foundations
         {
-            for id in 0..*game.num_foundations() {
-                let pile_id = PileId::Foundation(id);
+            for pile_id in game.foundation_ids() {
                 let mut game_new = game.clone();
                 let action = Action::Move {
                     num_cards: 1,
@@ -55,8 +54,7 @@ impl ActionsResults {
 
         // Waste to columns
         {
-            for id in 0..*game.num_columns() {
-                let pile_id = PileId::Column(id);
+            for pile_id in game.column_ids() {
                 let mut game_new = game.clone();
                 let action = Action::Move {
                     num_cards: 1,
@@ -70,10 +68,8 @@ impl ActionsResults {
 
         // Foundation to columns
         {
-            for f_id in 0..*game.num_foundations() {
-                let f_pile_id = PileId::Foundation(f_id);
-                for c_id in 0..*game.num_columns() {
-                    let c_pile_id = PileId::Column(c_id);
+            for f_pile_id in game.foundation_ids() {
+                for c_pile_id in game.column_ids() {
                     let mut game_new = game.clone();
                     let action = Action::Move {
                         num_cards: 1,
@@ -88,9 +84,8 @@ impl ActionsResults {
 
         // Columns to (foundations, columns)
         {
-            for from_id in 0..*game.num_columns() {
-                let from_pile = PileId::Column(from_id);
-                if let Ok(from_column) = game.pile(from_pile) {
+            for from_pile_id in game.column_ids() {
+                if let Ok(from_column) = game.pile(from_pile_id) {
                     let column_len = from_column.len();
 
                     // Try all possible stacks
@@ -103,29 +98,27 @@ impl ActionsResults {
                         }
 
                         // --- To Foundations ---
-                        for f_id in 0..*game.num_foundations() {
-                            let to_pile = PileId::Foundation(f_id);
+                        for to_pile_id in game.foundation_ids() {
                             let mut game_new = game.clone();
                             let action = Action::Move {
                                 num_cards: n,
-                                from: from_pile,
-                                to: to_pile,
+                                from: from_pile_id,
+                                to: to_pile_id,
                             };
                             let result = game_new.handle_action(action.clone());
                             res.push((action, result));
                         }
 
                         // --- To other Columns ---
-                        for to_id in 0..*game.num_columns() {
-                            if to_id == from_id {
+                        for to_pile_id in game.column_ids() {
+                            if to_pile_id == from_pile_id {
                                 continue; // skip same column
                             }
-                            let to_pile = PileId::Column(to_id);
                             let mut game_new = game.clone();
                             let action = Action::Move {
                                 num_cards: n,
-                                from: from_pile,
-                                to: to_pile,
+                                from: from_pile_id,
+                                to: to_pile_id,
                             };
                             let result = game_new.handle_action(action.clone());
                             res.push((action, result));

@@ -16,10 +16,6 @@ pub struct Game {
     pub waste: Waste,
     pub columns: HashMap<u8, Column>,
     pub foundations: HashMap<u8, Foundation>,
-    #[getset(get = "pub")]
-    num_foundations: u8,
-    #[getset(get = "pub")]
-    num_columns: u8,
     action_history: Vec<ActionResult>,
     seed: u64,
     #[getset(get = "pub")]
@@ -83,14 +79,28 @@ impl Game {
             waste,
             foundations,
             columns,
-            num_foundations: foundation_ids.len() as u8,
-            num_columns: column_ids.len() as u8,
             action_history: vec![],
             actions_results: ActionsResults::empty(),
         };
         let ar = ActionsResults::from_game(&game);
         game.actions_results = ar;
         game
+    }
+
+    pub fn foundation_ids(&self) -> Vec<PileId> {
+        let mut ids: Vec<PileId> = self
+            .foundations
+            .keys()
+            .map(|id| PileId::Foundation(*id))
+            .collect();
+        ids.sort();
+        ids
+    }
+
+    pub fn column_ids(&self) -> Vec<PileId> {
+        let mut ids: Vec<PileId> = self.columns.keys().map(|id| PileId::Column(*id)).collect();
+        ids.sort();
+        ids
     }
 
     pub fn pile(&self, id: PileId) -> Result<&dyn PileBehavior, GameError> {

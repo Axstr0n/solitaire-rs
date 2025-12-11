@@ -1,32 +1,52 @@
-pub const CARD_W: f32 = 90.0;
-pub const CARD_H: f32 = 128.0;
+use std::collections::HashMap;
 
-pub const TOP_Y: f32 = 20.0;
-pub const BOT_Y: f32 = 180.0;
+use solitaire_core::pile::PileId;
+use solitaire_engine::game::Game;
 
-pub const SPACING_X: f32 = 20.0;
-pub const X_START: f32 = 20.0;
+#[derive(Clone)]
+pub struct Layout {
+    pub pile_positions: HashMap<PileId, (f32, f32)>,
+    pub card_width: f32,
+    pub card_height: f32,
+    pub column_card_spacing: f32,
+}
 
-pub const TOP_ROW: [(f32, f32); 8] = horizontal_row(7, X_START, CARD_W + SPACING_X, TOP_Y);
+impl Layout {
+    pub fn new(game: &Game) -> Self {
+        let card_width = 90.0;
+        let card_height = 128.0;
+        let spacing_x = 20.0;
+        let x_start = 20.0;
+        let top_y = 20.0;
+        let bot_y = 180.0;
+        let column_card_spacing = 40.0;
 
-pub const STOCK_POS: (f32, f32) = TOP_ROW[0];
-pub const WASTE_POS: (f32, f32) = TOP_ROW[1];
-pub const FOUNDATION_POS: [(f32, f32); 4] = [TOP_ROW[3], TOP_ROW[4], TOP_ROW[5], TOP_ROW[6]];
+        let mut pile_positions = HashMap::new();
 
-pub const BOT_ROW: [(f32, f32); 8] = horizontal_row(7, X_START, CARD_W + SPACING_X, BOT_Y);
+        // Stock + Waste
+        pile_positions.insert(PileId::Stock, (x_start, top_y));
+        pile_positions.insert(PileId::Waste, (x_start + card_width + spacing_x, top_y));
 
-pub const COLUMN_POS: [(f32, f32); 7] = [
-    BOT_ROW[0], BOT_ROW[1], BOT_ROW[2], BOT_ROW[3], BOT_ROW[4], BOT_ROW[5], BOT_ROW[6],
-];
-pub const COLUMN_CARDS_SPACING: f32 = 40.0;
+        // Foundations
+        for &id in game.foundations.keys() {
+            let x = x_start + (card_width + spacing_x) * (3 + id) as f32; // same spacing logic
+            pile_positions.insert(PileId::Foundation(id), (x, top_y));
+        }
 
-pub const fn horizontal_row(count: usize, x_start: f32, spacing_x: f32, y: f32) -> [(f32, f32); 8] {
-    // max size must be known: we use 8 to cover up to tableau columns
-    let mut arr = [(0.0, 0.0); 8];
-    let mut i = 0;
-    while i < count {
-        arr[i] = (x_start + spacing_x * i as f32, y);
-        i += 1;
+        // Columns
+        for &id in game.columns.keys() {
+            let x = x_start + (card_width + spacing_x) * id as f32;
+            pile_positions.insert(PileId::Column(id), (x, bot_y));
+        }
+
+        Layout {
+            pile_positions,
+            card_width,
+            card_height,
+            column_card_spacing,
+        }
     }
-    arr
+    pub fn get_position(&self, pile: &PileId) -> Option<(f32, f32)> {
+        self.pile_positions.get(pile).copied()
+    }
 }
