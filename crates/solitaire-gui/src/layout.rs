@@ -17,8 +17,8 @@ impl Layout {
         let card_height = 128.0;
         let spacing_x = 20.0;
         let x_start = 20.0;
-        let top_y = 20.0;
-        let bot_y = 180.0;
+        let top_y = 60.0;
+        let bot_y = 200.0;
         let column_card_spacing = 40.0;
 
         let mut pile_positions = HashMap::new();

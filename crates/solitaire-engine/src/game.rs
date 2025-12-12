@@ -86,6 +86,9 @@ impl Game {
         game.actions_results = ar;
         game
     }
+    pub fn reset(&mut self) {
+        *self = Game::new(Some(self.seed));
+    }
 
     pub fn foundation_ids(&self) -> Vec<PileId> {
         let mut ids: Vec<PileId> = self
