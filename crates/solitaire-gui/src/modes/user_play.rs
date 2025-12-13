@@ -113,7 +113,6 @@ impl UserPlayMode {
             Ok(msg) => self.logger.add(format!("Success: {}", msg)),
             Err(e) => self.logger.add(format!("Failed: {:?}", e)),
         }
-        self.game.update_actions_results();
     }
     fn handle_interactions(&mut self, ui: &mut egui::Ui) {
         // Handle ongoing drag
@@ -182,7 +181,7 @@ impl UserPlayMode {
                     if response.drag_started() {
                         let mut cards = match pile {
                             PileId::Column(_) => {
-                                if let Ok(pile_ref) = self.game.pile(*pile) {
+                                if let Ok(pile_ref) = self.game.state.pile(*pile) {
                                     let num_cards = pile_ref.len().saturating_sub(*index);
                                     pile_ref.peek_cards(num_cards, Side::Top)
                                 } else {
@@ -240,7 +239,7 @@ impl UserPlayMode {
                 UiElement::EmptyPile { pile, rect, .. } => {
                     Self::render_placeholder(*rect, ui);
                     if let PileId::Foundation(i) = pile
-                        && let Some(pile) = self.game.foundations.get(i)
+                        && let Some(pile) = self.game.state.foundations.get(i)
                     {
                         self.render_template(pile.suit(), *rect, ui);
                     }
@@ -367,7 +366,7 @@ impl UserPlayMode {
         // Stock, Waste
         for pile_id in [PileId::Stock, PileId::Waste] {
             if let Some(pos) = self.layout.get_position(&pile_id)
-                && let Ok(pile) = self.game.pile(pile_id)
+                && let Ok(pile) = self.game.state.pile(pile_id)
             {
                 let cards = pile.peek_cards(pile.len(), Side::Bottom);
                 self.push_pile_elements_generic(
@@ -381,9 +380,9 @@ impl UserPlayMode {
         }
 
         // Foundations
-        for pile_id in self.game.foundation_ids() {
+        for pile_id in self.game.state.foundation_ids() {
             if let Some(pos) = self.layout.get_position(&pile_id)
-                && let Ok(pile_ref) = self.game.pile(pile_id)
+                && let Ok(pile_ref) = self.game.state.pile(pile_id)
             {
                 let cards = pile_ref.peek_cards(pile_ref.len(), Side::Bottom);
                 self.push_pile_elements_generic(
@@ -397,9 +396,9 @@ impl UserPlayMode {
         }
 
         // Columns
-        for pile_id in self.game.column_ids() {
+        for pile_id in self.game.state.column_ids() {
             if let Some(pos) = self.layout.get_position(&pile_id)
-                && let Ok(pile_ref) = self.game.pile(pile_id)
+                && let Ok(pile_ref) = self.game.state.pile(pile_id)
             {
                 let cards = pile_ref.peek_all(Side::Bottom);
                 self.push_pile_elements_generic(
@@ -444,12 +443,12 @@ impl UserPlayMode {
         ui.horizontal(|ui| {
             ui.label(format!("{pile_id:?}:"));
             if let PileId::Foundation(i) = pile_id
-                && let Some(pile) = self.game.foundations.get(&i)
+                && let Some(pile) = self.game.state.foundations.get(&i)
             {
                 ui.label(format!(" {}", pile.suit()));
             }
         });
-        if let Ok(pile) = self.game.pile(pile_id) {
+        if let Ok(pile) = self.game.state.pile(pile_id) {
             for card in pile.peek_cards(pile.len(), Side::Bottom) {
                 ui.label(format!("{card:?}"));
             }
@@ -465,10 +464,10 @@ impl UserPlayMode {
                 .show(ui, |ui| {
                     self.display_pile(PileId::Stock, ui);
                     self.display_pile(PileId::Waste, ui);
-                    for id in self.game.foundation_ids() {
+                    for id in self.game.state.foundation_ids() {
                         self.display_pile(id, ui);
                     }
-                    for id in self.game.column_ids() {
+                    for id in self.game.state.column_ids() {
                         self.display_pile(id, ui);
                     }
                 });

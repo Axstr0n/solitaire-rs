@@ -1,8 +1,5 @@
 use serde::{Deserialize, Serialize};
-use solitaire_core::{
-    card::{Card, Face},
-    pile::PileId,
-};
+use solitaire_core::pile::PileId;
 use std::fmt::Display;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -34,24 +31,4 @@ impl Display for Action {
         };
         write!(f, "{string}")
     }
-}
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ActionResult {
-    pub action: Action,
-    pub changes: Vec<GameChange>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum GameChange {
-    CardsMoved {
-        from: PileId,
-        to: PileId,
-        cards: Vec<Card>,
-    },
-    CardFlipped {
-        pile: PileId,
-        index: usize,
-        old_face: Face,
-        new_face: Face,
-    },
 }

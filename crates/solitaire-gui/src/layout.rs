@@ -28,13 +28,13 @@ impl Layout {
         pile_positions.insert(PileId::Waste, (x_start + card_width + spacing_x, top_y));
 
         // Foundations
-        for &id in game.foundations.keys() {
+        for &id in game.state.foundations.keys() {
             let x = x_start + (card_width + spacing_x) * (3 + id) as f32; // same spacing logic
             pile_positions.insert(PileId::Foundation(id), (x, top_y));
         }
 
         // Columns
-        for &id in game.columns.keys() {
+        for &id in game.state.columns.keys() {
             let x = x_start + (card_width + spacing_x) * id as f32;
             pile_positions.insert(PileId::Column(id), (x, bot_y));
         }

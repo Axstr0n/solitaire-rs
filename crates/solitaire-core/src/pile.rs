@@ -46,10 +46,24 @@ pub trait PileBehavior {
     fn cards_mut(&mut self) -> &mut VecDeque<Card>;
 
     // Raw operations (don't follow rules)
-    fn raw_take_card(&mut self, side: Side) -> Option<Card> {
-        match side {
-            Side::Top => self.cards_mut().pop_back(),
-            Side::Bottom => self.cards_mut().pop_front(),
+    // fn raw_take_card(&mut self, side: Side) -> Option<Card> {
+    //     match side {
+    //         Side::Top => self.cards_mut().pop_back(),
+    //         Side::Bottom => self.cards_mut().pop_front(),
+    //     }
+    // }
+    fn raw_take_cards(&mut self, n: usize, side: Side) -> Vec<Card> {
+        let mut cards = Vec::with_capacity(n);
+        for _ in 0..n {
+            if let Ok(card) = self.take_card(side) {
+                cards.push(card);
+            }
+        }
+        cards
+    }
+    fn raw_insert_cards(&mut self, cards: Vec<Card>, side: Side, face: Face) {
+        for card in cards {
+            let _ = self.insert_card(card, side, face);
         }
     }
     fn raw_insert_card(&mut self, mut card: Card, side: Side, face: Face) {

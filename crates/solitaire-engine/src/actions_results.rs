@@ -2,12 +2,12 @@ use getset::Getters;
 use serde::{Deserialize, Serialize};
 use solitaire_core::pile::PileId;
 
-use crate::{action::Action, error::GameError, game::Game};
+use crate::{action::Action, error::GameError, game::Game, prelude::GameState};
 
 #[derive(Clone, Serialize, Deserialize, Getters)]
 pub struct ActionsResults {
     #[getset(get = "pub")]
-    data: Vec<(Action, Result<String, GameError>)>,
+    data: Vec<(Action, Result<GameState, GameError>)>,
 }
 impl ActionsResults {
     pub fn empty() -> Self {
@@ -17,66 +17,58 @@ impl ActionsResults {
         let mut res = vec![];
         // Draw
         {
-            let mut game_new = game.clone();
+            let game_new = game.clone();
             let action = Action::Draw;
-            let result = game_new.handle_action(action.clone());
+            let result = game_new.test_action(action.clone());
             res.push((action, result));
         }
         // Recycle
         {
-            let mut game_new = game.clone();
+            let game_new = game.clone();
             let action = Action::Recycle;
-            let result = game_new.handle_action(action.clone());
-            res.push((action, result));
-        }
-
-        // Undo
-        {
-            let mut game_new = game.clone();
-            let action = Action::Undo;
-            let result = game_new.handle_action(action.clone());
+            let result = game_new.test_action(action.clone());
             res.push((action, result));
         }
 
         // Waste to foundations
         {
-            for pile_id in game.foundation_ids() {
-                let mut game_new = game.clone();
+            for pile_id in game.state.foundation_ids() {
+                let game_new = game.clone();
                 let action = Action::Move {
                     num_cards: 1,
                     from: PileId::Waste,
                     to: pile_id,
                 };
-                let result = game_new.handle_action(action.clone());
+                let result = game_new.test_action(action.clone());
                 res.push((action, result));
             }
         }
 
         // Waste to columns
         {
-            for pile_id in game.column_ids() {
-                let mut game_new = game.clone();
+            for pile_id in game.state.column_ids() {
+                let game_new = game.clone();
                 let action = Action::Move {
                     num_cards: 1,
                     from: PileId::Waste,
                     to: pile_id,
                 };
-                let result = game_new.handle_action(action.clone());
+                let result = game_new.test_action(action.clone());
                 res.push((action, result));
             }
         }
 
         // Foundation to columns
         {
-            for f_pile_id in game.foundation_ids() {
-                for c_pile_id in game.column_ids() {
-                    let mut game_new = game.clone();
+            for f_pile_id in game.state.foundation_ids() {
+                for c_pile_id in game.state.column_ids() {
+                    let game_new = game.clone();
                     let action = Action::Move {
                         num_cards: 1,
                         from: f_pile_id,
                         to: c_pile_id,
                     };
-                    let result = game_new.handle_action(action.clone());
+                    let result = game_new.test_action(action.clone());
                     res.push((action, result));
                 }
             }
@@ -84,8 +76,8 @@ impl ActionsResults {
 
         // Columns to (foundations, columns)
         {
-            for from_pile_id in game.column_ids() {
-                if let Ok(from_column) = game.pile(from_pile_id) {
+            for from_pile_id in game.state.column_ids() {
+                if let Ok(from_column) = game.state.pile(from_pile_id) {
                     let column_len = from_column.len();
 
                     // Try all possible stacks
@@ -98,29 +90,29 @@ impl ActionsResults {
                         }
 
                         // --- To Foundations ---
-                        for to_pile_id in game.foundation_ids() {
-                            let mut game_new = game.clone();
+                        for to_pile_id in game.state.foundation_ids() {
+                            let game_new = game.clone();
                             let action = Action::Move {
                                 num_cards: n,
                                 from: from_pile_id,
                                 to: to_pile_id,
                             };
-                            let result = game_new.handle_action(action.clone());
+                            let result = game_new.test_action(action.clone());
                             res.push((action, result));
                         }
 
                         // --- To other Columns ---
-                        for to_pile_id in game.column_ids() {
+                        for to_pile_id in game.state.column_ids() {
                             if to_pile_id == from_pile_id {
                                 continue; // skip same column
                             }
-                            let mut game_new = game.clone();
+                            let game_new = game.clone();
                             let action = Action::Move {
                                 num_cards: n,
                                 from: from_pile_id,
                                 to: to_pile_id,
                             };
-                            let result = game_new.handle_action(action.clone());
+                            let result = game_new.test_action(action.clone());
                             res.push((action, result));
                         }
                     }
@@ -136,10 +128,5 @@ impl ActionsResults {
             .iter()
             .filter_map(|(action, result)| result.as_ref().ok().map(|_| action.clone()))
             .collect()
-    }
-
-    /// Access all results
-    pub fn all(&self) -> &[(Action, Result<String, GameError>)] {
-        &self.data
     }
 }
