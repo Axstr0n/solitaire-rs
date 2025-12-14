@@ -83,6 +83,9 @@ impl Mode for UserPlayMode {
                 if ui.button("Undo").clicked() {
                     self.undo();
                 }
+                ui.separator();
+                ui.label("Moves: ");
+                ui.label(format!("{}", self.game.n_moves()));
             });
         });
         #[cfg(debug_assertions)]
@@ -102,6 +105,23 @@ impl Mode for UserPlayMode {
             self.render_ui_elements(ui);
             self.handle_interactions(ui);
         });
+
+        if self.game.state.is_won() {
+            egui::Modal::new(egui::Id::new("won_modal")).show(ctx, |ui| {
+                ui.heading("You WON");
+                ui.label("Congratulation");
+                ui.label(format!("Moves: {}", self.game.n_moves()));
+                ui.add_space(10.0);
+                ui.horizontal(|ui| {
+                    if ui.button("New Game").clicked() {
+                        self.new_game();
+                    }
+                    if ui.button("Reset").clicked() {
+                        self.reset();
+                    }
+                });
+            });
+        }
     }
     fn update(&mut self) {}
 }

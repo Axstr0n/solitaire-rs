@@ -85,6 +85,9 @@ impl Game {
     pub fn reset(&mut self) {
         *self = Game::new(Some(self.seed));
     }
+    pub fn n_moves(&self) -> usize {
+        self.state_history.len()
+    }
 }
 
 impl Game {
