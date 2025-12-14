@@ -23,8 +23,8 @@ impl Game {
     pub fn new(seed: Option<u64>) -> Self {
         // Generate a seed if none provided
         let seed = seed.unwrap_or_else(|| {
-            let mut rng = rand::rng();
-            rng.random::<u64>()
+            let mut rng = rand::thread_rng();
+            rng.r#gen()
         });
 
         let mut cards = all_cards();

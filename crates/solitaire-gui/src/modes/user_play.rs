@@ -47,6 +47,7 @@ impl Default for UserPlayMode {
             logger: GuiLogger::default(),
             dragging: None,
             ui_elements: vec![],
+            #[cfg(debug_assertions)]
             debug_mode: false,
             layout: Layout::new(&game),
         };

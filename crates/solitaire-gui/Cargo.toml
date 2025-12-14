@@ -18,6 +18,7 @@ log = "0.4.27"
 
 serde = { workspace = true }
 enum-iterator = { workspace = true }
+getrandom = { workspace = true }
 
 solitaire-core = { path = "../solitaire-core" }
 solitaire-engine = { path = "../solitaire-engine" }
@@ -32,6 +33,7 @@ env_logger = "0.11.8"
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-futures = "0.4.50"
 web-sys = "0.3.70"              # to access the DOM (to hide the loading text)
+web-time = "0.1"
 
 [profile.release]
 opt-level = 2 # fast and small wasm
