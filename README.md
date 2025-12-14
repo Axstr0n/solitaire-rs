@@ -1,5 +1,7 @@
 # solitaire-rs
 
+[https://axstr0n.github.io/solitaire-rs/](https://axstr0n.github.io/solitaire-rs/)
+
 A modular Rust implementation of Solitaire, split into three crates:
 * `solitaire-core` – data structures and card logic
 * `solitaire-engine` – game state, rules, and randomization
