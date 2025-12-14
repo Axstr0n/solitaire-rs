@@ -3,6 +3,7 @@
 mod app;
 pub use app::App;
 
+pub mod app_stats;
 pub mod card_assets;
 pub mod card_textures;
 pub mod layout;

@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    app_stats::AppStats,
     card_textures::CardTextures,
     modes::{mode::Mode, user_play::UserPlayMode},
 };
@@ -16,6 +17,7 @@ pub enum AppMode {
 pub struct App {
     mode: AppMode,
     user_play_mode: UserPlayMode,
+    stats: AppStats,
 
     // Shared resources
     #[serde(skip)]
@@ -51,6 +53,9 @@ impl eframe::App for App {
         {
             self.user_play_mode.card_textures = Some(app_textures.clone());
         }
+
+        self.stats.update_frame();
+
         egui::TopBottomPanel::top("top_bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 egui::global_theme_preference_switch(ui);
@@ -60,6 +65,10 @@ impl eframe::App for App {
                 if ui.button("UserPlay").clicked() {
                     self.mode = AppMode::UserPlay;
                 }
+                ui.separator();
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    self.stats_ui(ui);
+                });
             });
         });
         match self.mode {
@@ -67,6 +76,54 @@ impl eframe::App for App {
         }
         egui::CentralPanel::default().show(ctx, |_ui| match self.mode {
             AppMode::UserPlay => self.user_play_mode.render(ctx),
+        });
+
+        ctx.request_repaint();
+    }
+}
+// Stats
+impl App {
+    fn stats_ui(&self, ui: &mut egui::Ui) {
+        ui.menu_button("Stats", |ui| {
+            ui.heading("FPS Monitor");
+            ui.separator();
+
+            ui.add_space(10.0);
+
+            // Current FPS
+            ui.horizontal(|ui| {
+                ui.label("Current FPS:");
+                ui.colored_label(
+                    if self.stats.fps > 55.0 {
+                        egui::Color32::GREEN
+                    } else if self.stats.fps > 30.0 {
+                        egui::Color32::YELLOW
+                    } else {
+                        egui::Color32::RED
+                    },
+                    format!("{:.1}", self.stats.fps),
+                );
+            });
+
+            ui.add_space(5.0);
+
+            // Frame time
+            ui.horizontal(|ui| {
+                ui.label("Frame Time:");
+                ui.label(format!("{:.2} ms", self.stats.avg_frame_time * 1000.0));
+            });
+
+            ui.add_space(5.0);
+
+            // Min/Max FPS
+            ui.horizontal(|ui| {
+                ui.label("Min/Max:");
+                ui.label(format!(
+                    "{:.1} / {:.1} FPS",
+                    self.stats.min_fps, self.stats.max_fps
+                ));
+            });
+            ui.separator();
         });
     }
 }
